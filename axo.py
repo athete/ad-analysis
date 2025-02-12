@@ -9,12 +9,16 @@ from coffea.analysis_tools import PackedSelection
 
 class AXOHistFactory(processor.ProcessorABC):
     def __init__(self, triggers: List[str], hists_to_process: List[str]) -> None:
-        self.object_cuts = None if True else {
-            "ScoutingPFJet": [("pt", 30.0), ("eta", 3.0)],
-            "ScoutingElectron": [("pt", 10.0), ("eta", 2.65)],
-            "ScoutingPhoton": [("pt", 10.0), ("eta", 2.65)],
-            "ScoutingMuonVtx": [("pt", 3.0), ("eta", 2.4)],
-        }
+        self.object_cuts = (
+            None
+            if True
+            else {
+                "ScoutingPFJet": [("pt", 30.0), ("eta", 3.0)],
+                "ScoutingElectron": [("pt", 10.0), ("eta", 2.65)],
+                "ScoutingPhoton": [("pt", 10.0), ("eta", 2.65)],
+                "ScoutingMuonVtx": [("pt", 3.0), ("eta", 2.4)],
+            }
+        )
 
         self.triggers = triggers
         self.hists_to_process = hists_to_process
@@ -40,9 +44,9 @@ class AXOHistFactory(processor.ProcessorABC):
             {
                 "saturatedL1Jet": dak.all(events.L1Jet.pt < 1000, axis=1),
                 "saturatedL1MET": dak.all(
-                        events.L1EtSum.pt[
-                            (events.L1EtSum.etSumType == 2) & (events.L1EtSum.bx == 0)
-                        ]
+                    events.L1EtSum.pt[
+                        (events.L1EtSum.etSumType == 2) & (events.L1EtSum.bx == 0)
+                    ]
                     < 1040,
                     axis=1,
                 ),
@@ -60,17 +64,11 @@ class AXOHistFactory(processor.ProcessorABC):
         if "ScoutingMET" in self.hists_to_process:
             hists["ScoutingMET"] = hda.Hist(self.trigger_axis, self.met_axis)
         if "pt" in self.hists_to_process:
-            hists["pt"] = hda.Hist(
-                self.trigger_axis, self.pt_axis, self.object_axis
-            )
+            hists["pt"] = hda.Hist(self.trigger_axis, self.pt_axis, self.object_axis)
         if "eta" in self.hists_to_process:
-            hists["eta"] = hda.Hist(
-                self.trigger_axis, self.eta_axis, self.object_axis
-            )
+            hists["eta"] = hda.Hist(self.trigger_axis, self.eta_axis, self.object_axis)
         if "phi" in self.hists_to_process:
-            hists["phi"] = hda.Hist(
-                self.trigger_axis, self.phi_axis, self.object_axis
-            )
+            hists["phi"] = hda.Hist(self.trigger_axis, self.phi_axis, self.object_axis)
 
         # Apply triggers
         for trigger_path in self.triggers:
@@ -80,29 +78,47 @@ class AXOHistFactory(processor.ProcessorABC):
 
             if "ScoutingHT" in self.hists_to_process:
                 jets = events_triggered.ScoutingJet
-                scouting_ht = dak.sum(jets[(jets.pt > 30) & (jets.eta < 3.0)].pt, axis=1)
-                hists["ScoutingHT"].fill(ht=scouting_ht, trigger=trigger_path.split("_")[-1])
+                scouting_ht = dak.sum(
+                    jets[(jets.pt > 30) & (jets.eta < 3.0)].pt, axis=1
+                )
+                hists["ScoutingHT"].fill(
+                    ht=scouting_ht, trigger=trigger_path.split("_")[-1]
+                )
             if "ScoutingMET" in self.hists_to_process:
                 scouting_met = events_triggered.ScoutingMET.pt
-                hists["ScoutingMET"].fill(met=scouting_met, trigger=trigger_path.split("_")[-1])
+                hists["ScoutingMET"].fill(
+                    met=scouting_met, trigger=trigger_path.split("_")[-1]
+                )
 
             if self.object_cuts is None:
                 continue
-            
+
             for obj, obj_cutlist in self.object_cuts.items():
                 obj_branch = getattr(events_triggered, obj)
                 for var, cut in obj_cutlist:
-                    mask = (getattr(obj_branch, var) > cut)
-                    obj_branch = obj_branch[mask] 
-                
+                    mask = getattr(obj_branch, var) > cut
+                    obj_branch = obj_branch[mask]
+
                 if "pt" in self.hists_to_process:
-                    hists["pt"].fill(pt=dak.flatten(obj_branch.pt), object=obj, trigger=trigger_path.split("_")[-1])
+                    hists["pt"].fill(
+                        pt=dak.flatten(obj_branch.pt),
+                        object=obj,
+                        trigger=trigger_path.split("_")[-1],
+                    )
                 if "eta" in self.hists_to_process:
-                    hists["eta"].fill(eta=dak.flatten(obj_branch.eta), object=obj, trigger=trigger_path.split("_")[-1])
+                    hists["eta"].fill(
+                        eta=dak.flatten(obj_branch.eta),
+                        object=obj,
+                        trigger=trigger_path.split("_")[-1],
+                    )
                 if "phi" in self.hists_to_process:
-                    hists["phi"].fill(pt=dak.flatten(obj_branch.phi), object=obj, trigger=trigger_path.split("_")[-1])
+                    hists["phi"].fill(
+                        pt=dak.flatten(obj_branch.phi),
+                        object=obj,
+                        trigger=trigger_path.split("_")[-1],
+                    )
 
         return hists
-    
+
     def postprocess(self, accumulator):
         return accumulator
