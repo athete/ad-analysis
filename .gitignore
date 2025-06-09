@@ -162,3 +162,12 @@ cython_debug/
 #.idea/
 
 .vscode/
+
+# Project-specific files to ignore
+# Ignore **all** filesets, Jupyter notebooks, and results as we're only performing exploratory studies at the moment
+# will revisit this at a later time when the analysis is more advanced
+data/
+*.ipynb
+**/*.ipynb
+results/*
+**/filesets/*
